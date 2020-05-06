@@ -18,17 +18,15 @@ void get_hotwords(const string key, string &body){
 		return;
 	}
 
-	int t=time(0)/86400;//In Unix time, 1 day counts 86400.
-	string t_str=to_string(t);
+	//int t=time(0)/86400;//In Unix time, 1 day counts 86400.
+	//string t_str=to_string(t);
 
 	vector<string> items;
-	r->zrangebyscore(t_str,items);
+	r->zrevrangebyscore(key,items);
 	
 	for(int i=0;i<items.size();i++){
-		body+=to_string(i);
-		body+=" ";
 		body+=items[i];
-		body+=" ";
+		if(i<int(items.size())-1) body+=" ";
 	}
 	fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
 }
@@ -89,21 +87,27 @@ void post_method_handler(const shared_ptr<Session> session){
 int main(void){
 	cout<<"Start restbed."<<endl;
 	
-	auto resource_get=make_shared<Resource>();
-	resource_get->set_path("/hotwords");
-	resource_get->set_method_handler("GET",get_method_handler);
+	//auto resource_get=make_shared<Resource>();
+	//resource_get->set_path("/hotwords");
+	//resource_get->set_method_handler("GET",get_method_handler);
 
-	auto resource_post=make_shared<Resource>();
-	resource_post->set_path("/resource");
-	resource_post->set_method_handler("POST",post_method_handler);
+	//auto resource_post=make_shared<Resource>();
+	//resource_post->set_path("/resource");
+	//resource_post->set_method_handler("POST",post_method_handler);
+
+	auto resource=make_shared<Resource>();
+	resource->set_path("/resource");
+	resource->set_method_handler("POST",post_method_handler);
+	resource->set_method_handler("GET",get_method_handler);
 
 	auto settings=make_shared<Settings>();
 	settings->set_port(1984);
 	settings->set_default_header("Connection","close");
 
 	Service service;
-	service.publish(resource_get);
-	service.publish(resource_post);
+	service.publish(resource);
+	//service.publish(resource_get);
+	//service.publish(resource_post);
 	service.start(settings);
 
 	return EXIT_SUCCESS;

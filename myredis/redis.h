@@ -55,12 +55,13 @@ public:
 		}
 	}
 
-	int zrangebyscore(std::string key,std::vector<std::string> &items){
-		std::string cmd="ZRANGEBYSCORE "+key+" -inf 5 limit 0 100";
+	int zrevrangebyscore(std::string key,std::vector<std::string> &items){
+		std::string cmd="ZREVRANGEBYSCORE "+key+" inf 1 limit 0 100";
 		this->_reply=(redisReply*)redisCommand(this->_connect,cmd.c_str());
 		int res=0;
 		if(this->_reply&&this->_reply->type==REDIS_REPLY_ARRAY){
 			std::string str=std::to_string(this->_reply->elements);
+			str = "Get "+str+" Hotwords";
 			fprintf(stdout,"%.*s\n",20,str.c_str());
 			for(size_t i=0;i<this->_reply->elements;i++){
 				redisReply *ele=this->_reply->element[i];
