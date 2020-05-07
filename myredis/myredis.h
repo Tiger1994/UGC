@@ -1,5 +1,5 @@
-#ifndef _REDIS_H_
-#define _REDIS_H_
+#ifndef UGC_MYREDIS_MYREDIS_H_
+#define UGC_MYREDIS_MYREDIS_H_
 
 #include<iostream>
 #include<string.h>
