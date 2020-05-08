@@ -5,7 +5,7 @@
 #include<restbed>
 #include<cstdlib>
 #include<iostream>
-#include"myredis/redis.h"
+#include"myredis/myredis.h"
 
 using namespace std;
 using namespace restbed;
@@ -42,6 +42,37 @@ void get_method_handler(const shared_ptr<Session> session){
 	session->close(OK, body, {{"Content-Length", ::to_string(body.size())}});
 }
 
+void write_keywords_to_redis(Document &json_doc) {	
+	Redis *r = new Redis();
+    if(!r->connect("127.0.0.1", 6379)){
+        fprintf(stdout, "Connect Redis failed");
+        return;
+    }
+
+   
+    vector<string> words;
+    string keywords, time_str;
+    if(json_doc.HasMember("keywords")) {
+        keywords = json_doc["keywords"].GetString();
+    }
+    if(json_doc.HasMember("time")) {
+        time_str = json_doc["time"].GetString();
+    }
+    string temp_word;
+    for(char c:keywords) {
+        if(c == ',') {
+            words.push_back(temp_word);
+            temp_word.clear();
+        }
+        else temp_word += c;
+    }
+    if(temp_word.size()) words.push_back(temp_word);
+    if(words.size() && time_str.size()) {
+        r->zadd_words(time_str, words);
+        delete r;
+        r=NULL;
+    }
+}
 
 void post_method_handler(const shared_ptr<Session> session){
 	const auto request = session->get_request();
@@ -50,30 +81,14 @@ void post_method_handler(const shared_ptr<Session> session){
 	auto handle_body = [request](const shared_ptr<Session> session,const Bytes &body){	
 		fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
 		
-		Redis *r = new Redis();
-		if(!r->connect("127.0.0.1", 6379)){
-			fprintf(stdout, "Connect Redis failed");
-			return;
-		}
-		
-		int t = time(0)/86400;  //In Unix time, 1 day counts 86400.
-		string t_str = to_string(t);
-		Document doc;
-
-		//Convert unsighed char* to char*
-		char temp[body.size()+1];
-		memcpy(temp,body.data(), body.size()+1);
-		string s_temp(temp);
-
-		doc.Parse(s_temp.c_str());
-		vector<string> words;
-		for(size_t i = 0; i<doc["keywords"].Size(); i++){
-			words.push_back(doc["keywords"][i].GetString());
-		}
-		r->zadd_words(t_str, words);
-		delete r;
-		r=NULL;
-
+        Document json_doc;
+        //Convert unsighed char* to char*
+        char temp[body.size() + 1];
+        memcpy(temp,body.data(), body.size() + 1);
+        string s_temp(temp);
+        json_doc.Parse(s_temp.c_str());
+        
+        write_keywords_to_redis(json_doc);
 		session->close(OK, "Post complete!", {{"Content-Length", "14"}, {"Connection", "close"}});
 	};
 
