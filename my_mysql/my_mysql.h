@@ -4,6 +4,8 @@
 #include "mysql++.h"
 #include <string>
 #include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 void create_table_in_mysql() {
   const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
@@ -28,22 +30,31 @@ void insert_record_to_mysql(std::string &cmd) {
 	query.execute();
 }
 
-void select_one_record_from_mysql(std::string &cmd, rapidjson::Document &json_doc){
+void select_one_day_from_mysql(std::string &cmd, rapidjson::Document &json_doc){
 	const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
 	mysqlpp::Connection conn(db, server, user, pass);
 	mysqlpp::Query query = conn.query(cmd.c_str());
 	mysqlpp::StoreQueryResult res = query.store();
-
-  std::string title(res[0]["title"]);
-  std::string author(res[0]["author"]);
-  std::string keywords(res[0]["keywords"]);
-  std::string time(res[0]["time"]);
-  std::string content(res[0]["content"]);
-  rapidjson::Document::AllocatorType& allocator = json_doc.GetAllocator();
-	json_doc.AddMember("title", rapidjson::StringRef(title.c_str()), allocator);
-	json_doc.AddMember("author", rapidjson::StringRef(author.c_str()), allocator);
-	json_doc.AddMember("keywords", rapidjson::StringRef(keywords.c_str()), allocator);
-	json_doc.AddMember("time", rapidjson::StringRef(time.c_str()), allocator);
-	json_doc.AddMember("content", rapidjson::StringRef(content.c_str()), allocator);
+	
+	raidjson::StringBuffer str_buf;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
+	writer.StartObject();
+	for (size_t i = 0; i < res.size(); i++) {
+		writer.Key(res[i]["id"]);
+		writer.StartObject();
+		writer.Key("title");
+		writer.String(res[i]["title"]);
+		writer.Key("author");
+		writer.String(res[i]["author"]);
+		writer.Key("keywords");
+		writer.String(res[i]["keywords"]);
+		writer.Key("time");
+		writer.String(res[i]["time"]);
+		writer.Key("content");
+		writer.String(res[i]["content"]);
+		writer.EndObject();
+	}
+	writer.EndObject();
+	records = str_buf.GetString();
 }
 #endif

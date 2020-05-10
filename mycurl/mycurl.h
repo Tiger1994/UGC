@@ -32,3 +32,4 @@ int search_in_es(const std::string &search_info, string &search_res) {
   search_res = out.str();
   return 0;
 }
+#endif
