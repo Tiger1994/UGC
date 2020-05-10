@@ -8,6 +8,7 @@
 #include <sstream>
 #include"myredis/myredis.h"
 #include "my_mysql/my_mysql.h"
+#include "mycurl/mycurl.h"
 
 using namespace std;
 using namespace restbed;
@@ -26,16 +27,21 @@ void get_hotwords(const string key, string &body){
 		body += items[i];
 		if(i<int(items.size())-1) body += ",";
 	}
-	fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
+	//fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
 }
 
 void get_method_handler(const shared_ptr<Session> session){
 	const auto request = session->get_request();
 	const string hot_date = request->get_query_parameter("hot");
+	const string record_date = request->get_query_parameter("record");
+	const string search_info = request->get_query_parameter("search");
 	string body;
 	if(!hot_date.empty()){
-		fprintf(stdout,"%.*s\n",20,"Getting Hot words.");
 		get_hotwords(hot_date, body);
+	} else if (!record_date.empty()) {
+		select_one_day_from_mysql(record_date, body);	
+	} else if (!search_info.empty()) {
+		search_in_es(search_info, body);	
 	}
 	session->close(OK, body, {{"Content-Length", ::to_string(body.size())}});
 }

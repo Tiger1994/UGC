@@ -56,7 +56,7 @@ public:
 		if(this->reply_ && this->reply_->type == REDIS_REPLY_ARRAY){
 			std::string str = std::to_string(this->reply_->elements);
 			str = "Get " + str + " Hotwords";
-			fprintf(stdout, "%.*s\n", 20, str.c_str());
+			fprintf(stdout, "%.*s\n", str.size(), str.c_str());
 			
 			for(size_t i = 0; i < this->reply_->elements; i++){
 				redisReply *ele = this->reply_->element[i];

@@ -11,13 +11,13 @@ void create_table_in_mysql() {
   const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
 	mysqlpp::Connection conn(db, server, user, pass);
   std::string cmd = "CREATE TABLE IF NOT EXISTS resource( \
-                      resource_id INT NOT NULL AUTO_INCREMENT, \
+                      id INT NOT NULL AUTO_INCREMENT, \
                       title VARCHAR(100) NOT NULL, \
                       author VARCHAR(100) NOT NULL, \
                       keywords VARCHAR(100) NOT NULL, \
-                      time DATE NOT NULL, \
+                      time VARCHAR(20) NOT NULL, \
                       content MEDIUMTEXT NOT NULL, \
-                      PRIMARY KEY (resource_id) \
+                      PRIMARY KEY (id) \
                      )ENGINE=InnoDB DEFAULT CHARSET=utf8;";
   mysqlpp::Query query = conn.query(cmd.c_str());
 	query.execute();
@@ -30,13 +30,17 @@ void insert_record_to_mysql(std::string &cmd) {
 	query.execute();
 }
 
-void select_one_day_from_mysql(std::string &cmd, rapidjson::Document &json_doc){
+void select_one_day_from_mysql(const std::string &date, std::string &records){
 	const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
 	mysqlpp::Connection conn(db, server, user, pass);
+	
+	std::string cmd = "SELECT * FROM resource WHERE time=\"" + date +"\";";
 	mysqlpp::Query query = conn.query(cmd.c_str());
 	mysqlpp::StoreQueryResult res = query.store();
-	
-	raidjson::StringBuffer str_buf;
+
+	std::string res_num = "Get " + std::to_string(res.size()) + " records";
+	fprintf(stdout, "%.*s\n", res_num.size(), res_num.c_str());	
+	rapidjson::StringBuffer str_buf;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
 	writer.StartObject();
 	for (size_t i = 0; i < res.size(); i++) {
