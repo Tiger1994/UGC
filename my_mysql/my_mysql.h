@@ -30,7 +30,12 @@ void insert_record_to_mysql(std::string &cmd) {
 	query.execute();
 }
 
-void select_one_day_from_mysql(const std::string &date, std::string &records){
+void select_one_day_from_mysql(const std::string &date, const std::string str_limit, \
+		const std::string str_offset, std::string &records){
+	int limit = 10, offset = 0;
+	if(!str_limit.empty()) limit = std::stoi(str_limit);
+	if(!str_offset.empty()) offset = std::stoi(str_offset);
+
 	const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
 	mysqlpp::Connection conn(db, server, user, pass);
 	
@@ -43,8 +48,12 @@ void select_one_day_from_mysql(const std::string &date, std::string &records){
 	rapidjson::StringBuffer str_buf;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
 	writer.StartObject();
-	for (size_t i = 0; i < res.size(); i++) {
-		writer.Key(res[i]["id"]);
+	writer.Key("total");
+	writer.Int(res.size());
+	int ceil = offset + limit > res.size() ? res.size() : offset + limit;
+	for (size_t i = offset; i < ceil; i++) {
+		std::string str_index = std::to_string(i);
+		writer.Key(str_index.c_str());
 		writer.StartObject();
 		writer.Key("title");
 		writer.String(res[i]["title"]);

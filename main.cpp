@@ -21,7 +21,9 @@ void get_method_handler(const shared_ptr<restbed::Session> session){
 	if(!hot_date.empty()){
 		get_hotwords(hot_date, body);
 	} else if (!record_date.empty()) {
-		select_one_day_from_mysql(record_date, body);	
+		const string limit = request->get_query_parameter("limit");
+		const string offset = request->get_query_parameter("offset");
+		select_one_day_from_mysql(record_date, limit, offset, body);	
 	} else if (!search_info.empty()) {
 		search_in_es(search_info, body);	
 	}
