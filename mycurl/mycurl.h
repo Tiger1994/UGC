@@ -21,7 +21,12 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
   return size*nmemb;
 }
 
-int search_in_es(const std::string &search_info, std::string &search_res) {
+int search_in_es(const std::string &search_info, const std::string str_limit, \
+		const std::string str_offset, std::string &search_res) {
+	int limit = 10, offset = 0;
+	if(!str_limit.empty()) limit = std::stoi(str_limit);
+	if(!str_offset.empty()) offset = std::stoi(str_offset);
+
 	rapidjson::StringBuffer str_buf;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
 	writer.StartObject();
@@ -61,16 +66,19 @@ int search_in_es(const std::string &search_info, std::string &search_res) {
 	std::string out_s = out.str();
 	doc.Parse(out_s.c_str());
 	rapidjson::Value& hits = doc["hits"]["hits"];
-  
+  int total = doc["hits"]["total"].GetInt();
 	rapidjson::StringBuffer str_buf2;
 	rapidjson::Writer<rapidjson::StringBuffer> writer2(str_buf2);
 	writer2.StartObject();
-
+	writer2.Key("total");
+	writer2.Int(total);
 	std::string num_find = std::to_string(doc["hits"]["total"].GetInt());
 	num_find = "Searched " + num_find + " record(s).";
 	fprintf(stdout, "%.*s\n", num_find.size(), num_find.c_str());
-  for (size_t i = 0; i < doc["hits"]["total"].GetInt(); i++) {
-    writer2.Key(std::to_string(hits[i]["_source"]["id"].GetInt()).c_str());
+	int ceil = offset + limit > total ? total : offset + limit;
+  for (size_t i = offset; i < ceil; i++) {
+		std::string str_index = std::to_string(i);
+    writer2.Key(str_index.c_str());
     writer2.StartObject();
     writer2.Key("title");
     writer2.String(hits[i]["_source"]["title"].GetString());

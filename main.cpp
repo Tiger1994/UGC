@@ -17,15 +17,16 @@ void get_method_handler(const shared_ptr<restbed::Session> session){
 	const string hot_date = request->get_query_parameter("hot");
 	const string record_date = request->get_query_parameter("record");
 	const string search_info = request->get_query_parameter("search");
+	const string limit = request->get_query_parameter("limit");
+	const string offset = request->get_query_parameter("offset");
+	
 	string body;
 	if(!hot_date.empty()){
 		get_hotwords(hot_date, body);
 	} else if (!record_date.empty()) {
-		const string limit = request->get_query_parameter("limit");
-		const string offset = request->get_query_parameter("offset");
 		select_one_day_from_mysql(record_date, limit, offset, body);	
 	} else if (!search_info.empty()) {
-		search_in_es(search_info, body);	
+		search_in_es(search_info, limit, offset, body);	
 	}
 	session->close(restbed::OK, body, {{"Content-Length", ::to_string(body.size())}});
 }
