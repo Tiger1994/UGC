@@ -7,6 +7,7 @@
 #include<stdio.h>
 #include<vector>
 #include<hiredis/hiredis.h>
+#include<rapidjson/document.h>
 
 class Redis{
 public:
@@ -81,5 +82,57 @@ private:
 	redisContext* connetc_;
 	redisReply* reply_;
 };
+
+void get_hotwords(const std::string key, std::string &body){
+  Redis *r = new Redis();
+  if(!r->connect("127.0.0.1",6379)){
+    fprintf(stdout,"Connect Redis failed");
+    return;
+  }
+
+  std::vector<std::string> items;
+  r->zrevrangebyscore(key,items);
+
+  for(int i = 0; i < items.size(); i++){
+    body += items[i];
+    if(i<int(items.size())-1) body += ",";
+  }
+  //fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
+}
+
+void write_keywords_to_redis(const rapidjson::Document &json_doc) {
+  std::string show_status = "Write to Redis.";
+  fprintf(stdout, "%.*s\n", (int)show_status.size(), show_status.c_str());
+  
+  Redis *r = new Redis();
+  if(!r->connect("127.0.0.1", 6379)){
+      fprintf(stdout, "%.*s\n", 20, "Connect Redis failed");
+      return;
+  }   
+  
+  std::vector<std::string> words;
+  std::string keywords, time_str;
+  
+  if(json_doc.HasMember("keywords")) {
+      keywords = json_doc["keywords"].GetString();
+  }
+  if(json_doc.HasMember("time")) {
+      time_str = json_doc["time"].GetString();
+  }
+  std::string temp_word;
+  for(char c:keywords) {
+      if(c == ',') {
+          words.push_back(temp_word);
+          temp_word.clear();
+      }
+      else temp_word += c;
+  }
+  if(temp_word.size()) words.push_back(temp_word);
+  if(words.size() && time_str.size()) {
+      r->zadd_words(time_str, words);
+      delete r;
+      r=NULL;
+  }
+}
 
 #endif

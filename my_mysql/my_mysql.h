@@ -61,4 +61,22 @@ void select_one_day_from_mysql(const std::string &date, std::string &records){
 	writer.EndObject();
 	records = str_buf.GetString();
 }
+
+void write_record_to_mysql(const rapidjson::Document &json_doc) {
+  std::string show_status = "Write to MySQL.";
+  fprintf(stdout, "%.*s\n", (int)show_status.size(), show_status.c_str());
+
+  std::string cmd;
+  std::stringstream scmd;
+  scmd << "INSERT INTO resource (title, author, keywords, time, content) VALUES (\"";
+  scmd << json_doc["title"].GetString() << "\", \"" <<  \
+         json_doc["author"].GetString() << "\", \"" << \
+         json_doc["keywords"].GetString() << "\", \"" << \
+         json_doc["time"].GetString() << "\", \"" << \
+         json_doc["content"].GetString() << "\");";
+  cmd = scmd.str();
+  //fprintf(stdout, "%.*s\n", (int)cmd.size(), cmd.c_str());
+  insert_record_to_mysql(cmd);
+}
+
 #endif
