@@ -1,19 +1,21 @@
 #ifndef _MYCURL_MYCURL_H_
 #define _MYCURL_MYCURL_H_
 
-#include <curl/curl.h>
-#include <curl/easy.h>
-#include <curl/curlbuild.h>
+#include <unistd.h>
+
 #include <sstream>
 #include <iostream>
+#include <vector>
 #include <string>
 #include <ctime>
 #include <fstream>
-#include <unistd.h>
+
 #include "rapidjson/writer.h"
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
-#include <vector>
+#include <curl/curl.h>
+#include <curl/easy.h>
+#include <curl/curlbuild.h>
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
   std::string data((const char*) ptr, (size_t) size * nmemb);
