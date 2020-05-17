@@ -42,9 +42,36 @@ void PostRecordHandler(const shared_ptr<restbed::Session> session){
     memcpy(temp, body.data(), body.size());
     temp[body.size()] = '\0';
     json_doc.Parse(temp);
-
-    WriteKeywordsToRedis(json_doc);
-    WriteRecordToMysql(json_doc);
+		bool valid_title = false;
+		bool valid_author = false;
+		bool valid_keywords = false;
+		bool valid_time = false;
+		bool valid_content = false;
+		
+		if(json_doc.HasMember("title")) {
+			string title = json_doc["title"].GetString();
+			if(!title.empty()) valid_title = true;
+		}	
+ 		if(json_doc.HasMember("author")) {
+			string title = json_doc["author"].GetString();
+			if(!title.empty()) valid_author = true;
+		}	
+ 		if(json_doc.HasMember("keywords")) {
+			string title = json_doc["keywords"].GetString();
+			if(!title.empty()) valid_keywords = true;
+		}	
+ 		if(json_doc.HasMember("time")) {
+			string title = json_doc["time"].GetString();
+			if(!title.empty()) valid_time = true;
+		}	
+ 		if(json_doc.HasMember("content")) {
+			string title = json_doc["content"].GetString();
+			if(!title.empty()) valid_content = true;
+		}
+		if(valid_title && valid_author && valid_keywords && valid_time && valid_content) {
+			WriteKeywordsToRedis(json_doc);
+			WriteRecordToMysql(json_doc);
+		}
     session->close(restbed::OK, "Post complete!", {{"Content-Length", "14"}, \
 			{"Connection", "close"}});
   };
