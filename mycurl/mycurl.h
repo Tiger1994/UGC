@@ -1,8 +1,6 @@
 #ifndef _MYCURL_MYCURL_H_
 #define _MYCURL_MYCURL_H_
 
-#include <unistd.h>
-
 #include <sstream>
 #include <iostream>
 #include <vector>
