@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void get_method_handler(const shared_ptr<restbed::Session> session){
+void GetMethodHandler(const shared_ptr<restbed::Session> session){
   const auto request = session->get_request();
   const string hot_date = request->get_query_parameter("hot");
   const string record_date = request->get_query_parameter("record");
@@ -29,7 +29,7 @@ void get_method_handler(const shared_ptr<restbed::Session> session){
   session->close(restbed::OK, body, {{"Content-Length", ::to_string(body.size())}});
 }
 
-void post_record_handler(const shared_ptr<restbed::Session> session){
+void PostRecordHandler(const shared_ptr<restbed::Session> session){
   const auto request = session->get_request();
   size_t content_size = request->get_header("Content-Length", 0);
   
@@ -50,7 +50,7 @@ void post_record_handler(const shared_ptr<restbed::Session> session){
   session->fetch(content_size, handle_body);  
 }
 
-void post_search_handler(const shared_ptr<restbed::Session> session){
+void PostSearchHandler(const shared_ptr<restbed::Session> session){
   const auto request = session->get_request();
   size_t content_size = request->get_header("Content-Length", 0);
   
@@ -73,17 +73,17 @@ void post_search_handler(const shared_ptr<restbed::Session> session){
 }
 
 int main(void){
-  cout<<"Start restbed."<<endl;
+  cout << "Start restbed." << endl;
   CreateTableInMysql();
 
   auto resource = make_shared<restbed::Resource>();
   resource->set_path("/resource");
-  resource->set_method_handler("POST", post_record_handler);
-  resource->set_method_handler("GET", get_method_handler);
+  resource->set_method_handler("POST", PostRecordHandler);
+  resource->set_method_handler("GET", GetMethodHandler);
 
   auto resource_search = make_shared<restbed::Resource>();
   resource_search->set_path("/resource/_search");
-  resource_search->set_method_handler("POST", post_search_handler);
+  resource_search->set_method_handler("POST", PostSearchHandler);
 
   auto settings = make_shared<restbed::Settings>();
   settings->set_port(1984);
