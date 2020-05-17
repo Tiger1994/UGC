@@ -63,6 +63,9 @@ int SearchInES(const std::string &search_info, const std::string str_limit, \
 
   //fprintf(stdout, "%.*s\n", int(out_s.size()), out_s.c_str());
   doc.Parse(out_s.c_str());
+  if(doc.HasMember("error")) {
+    return 0;
+  } 
   rapidjson::Value& hits = doc["hits"]["hits"];
   int total = doc["hits"]["total"].GetInt();
   rapidjson::StringBuffer str_buf2;
