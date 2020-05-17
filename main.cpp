@@ -1,4 +1,3 @@
-#include"rapidjson/document.h"
 #include<vector>
 #include<ctime>
 #include<string>
@@ -6,8 +5,10 @@
 #include<cstdlib>
 #include<iostream>
 #include <sstream>
+
 #include"myredis/myredis.h"
 #include "my_mysql/my_mysql.h"
+#include"rapidjson/document.h"
 #include "mycurl/mycurl.h"
 
 using namespace std;
@@ -21,9 +22,9 @@ void get_method_handler(const shared_ptr<restbed::Session> session){
   
   string body;
   if(!hot_date.empty()){
-    get_hotwords(hot_date, body);
+    GetHotwords(hot_date, body);
   } else if (!record_date.empty()) {
-    select_one_day_from_mysql(record_date, limit, offset, body);  
+    SelectOneDayFromMysql(record_date, limit, offset, body);  
   }
   session->close(restbed::OK, body, {{"Content-Length", ::to_string(body.size())}});
 }
@@ -41,8 +42,8 @@ void post_record_handler(const shared_ptr<restbed::Session> session){
     temp[body.size()] = '\0';
     json_doc.Parse(temp);
 
-    write_keywords_to_redis(json_doc);
-    write_record_to_mysql(json_doc);
+    WriteKeywordsToRedis(json_doc);
+    WriteRecordToMysql(json_doc);
     session->close(restbed::OK, "Post complete!", {{"Content-Length", "14"}, {"Connection", "close"}});
   };
 
@@ -63,7 +64,7 @@ void post_search_handler(const shared_ptr<restbed::Session> session){
     temp[body.size()] = '\0';
     string search_info(temp);
     string search_res;
-    search_in_es(search_info, limit, offset, search_res);
+    SearchInES(search_info, limit, offset, search_res);
     string res_len = to_string(int(search_res.size()));
     session->close(restbed::OK, search_res.c_str(), {{"Content-Length", res_len}});
   };
@@ -73,7 +74,7 @@ void post_search_handler(const shared_ptr<restbed::Session> session){
 
 int main(void){
   cout<<"Start restbed."<<endl;
-  create_table_in_mysql();
+  CreateTableInMysql();
 
   auto resource = make_shared<restbed::Resource>();
   resource->set_path("/resource");
