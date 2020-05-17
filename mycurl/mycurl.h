@@ -36,23 +36,17 @@ int search_in_es(const std::string &search_info, const std::string str_limit, \
 	writer.StartObject();
 	writer.Key("content");
 
-	// convert comma to space.
-	std::string temp;
-	for(char c:search_info) {
-		 if(c == ',') {
-				temp += ' ';
-		 }
-		 else temp += c;
-	}
-	writer.String(temp.c_str());
+	writer.String(search_info.c_str());
 	writer.EndObject();	
 	writer.EndObject();	
 	writer.EndObject();	
 
   std::stringstream out;
 	std::string query = str_buf.GetString();
+
+	//fprintf(stdout, "%.*s\n", int(query.size()), query.c_str());
 	void* curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9200/resource/_search?pretty");
+	curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9200/resource/_search");
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, query.c_str());
@@ -64,6 +58,8 @@ int search_in_es(const std::string &search_info, const std::string str_limit, \
 	
 	rapidjson::Document doc;
 	std::string out_s = out.str();
+
+	//fprintf(stdout, "%.*s\n", int(out_s.size()), out_s.c_str());
 	doc.Parse(out_s.c_str());
 	rapidjson::Value& hits = doc["hits"]["hits"];
   int total = doc["hits"]["total"].GetInt();

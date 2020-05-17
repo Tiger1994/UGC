@@ -23,13 +23,6 @@ void create_table_in_mysql() {
 	query.execute();
 }
 
-void insert_record_to_mysql(std::string &cmd) {
-	const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
-	mysqlpp::Connection conn(db, server, user, pass);
-	mysqlpp::Query query = conn.query(cmd.c_str());
-	query.execute();
-}
-
 void select_one_day_from_mysql(const std::string &date, const std::string str_limit, \
 		const std::string str_offset, std::string &records){
 	int limit = 10, offset = 0;
@@ -37,7 +30,9 @@ void select_one_day_from_mysql(const std::string &date, const std::string str_li
 	if(!str_offset.empty()) offset = std::stoi(str_offset);
 
 	const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
-	mysqlpp::Connection conn(db, server, user, pass);
+	mysqlpp::Connection conn(false);
+	conn.set_option(new mysqlpp::SetCharsetNameOption("utf8"));
+	conn.connect(db, server, user, pass);
 	
 	std::string cmd = "SELECT * FROM resource WHERE time=\"" + date +"\";";
 	mysqlpp::Query query = conn.query(cmd.c_str());
@@ -85,7 +80,13 @@ void write_record_to_mysql(const rapidjson::Document &json_doc) {
          json_doc["content"].GetString() << "\");";
   cmd = scmd.str();
   //fprintf(stdout, "%.*s\n", (int)cmd.size(), cmd.c_str());
-  insert_record_to_mysql(cmd);
+	
+	const char* db = "tiger", *server = "localhost", *user = "root", *pass = "123";
+	mysqlpp::Connection conn(false);
+	conn.set_option(new mysqlpp::SetCharsetNameOption("utf8"));
+	conn.connect(db, server, user, pass);
+	mysqlpp::Query query = conn.query(cmd.c_str());
+	query.execute();
 }
 
 #endif
