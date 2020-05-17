@@ -1,14 +1,14 @@
-#include<vector>
-#include<ctime>
-#include<string>
-#include<restbed>
-#include<cstdlib>
-#include<iostream>
+#include <vector>
+#include <ctime>
+#include <string>
+#include <restbed>
+#include <cstdlib>
+#include <iostream>
 #include <sstream>
 
-#include"myredis/myredis.h"
+#include "myredis/myredis.h"
 #include "my_mysql/my_mysql.h"
-#include"rapidjson/document.h"
+#include "rapidjson/document.h"
 #include "mycurl/mycurl.h"
 
 using namespace std;
@@ -33,7 +33,8 @@ void PostRecordHandler(const shared_ptr<restbed::Session> session){
   const auto request = session->get_request();
   size_t content_size = request->get_header("Content-Length", 0);
   
-  auto handle_body = [request](const shared_ptr<restbed::Session> session,const restbed::Bytes &body){  
+  auto handle_body = [request](const shared_ptr<restbed::Session> session, \
+			const restbed::Bytes &body){  
     //fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
     rapidjson::Document json_doc;
     //Convert unsighed char* to char*
@@ -44,7 +45,8 @@ void PostRecordHandler(const shared_ptr<restbed::Session> session){
 
     WriteKeywordsToRedis(json_doc);
     WriteRecordToMysql(json_doc);
-    session->close(restbed::OK, "Post complete!", {{"Content-Length", "14"}, {"Connection", "close"}});
+    session->close(restbed::OK, "Post complete!", {{"Content-Length", "14"}, \
+			{"Connection", "close"}});
   };
 
   session->fetch(content_size, handle_body);  
@@ -54,7 +56,8 @@ void PostSearchHandler(const shared_ptr<restbed::Session> session){
   const auto request = session->get_request();
   size_t content_size = request->get_header("Content-Length", 0);
   
-  auto handle_body = [request](const shared_ptr<restbed::Session> session,const restbed::Bytes &body){  
+  auto handle_body = [request](const shared_ptr<restbed::Session> session, \
+			const restbed::Bytes &body){  
     //fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
     const string limit = request->get_query_parameter("limit");
     const string offset = request->get_query_parameter("offset");
