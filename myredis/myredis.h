@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <codecvt>
+#include <locale>
 
 #include <hiredis/hiredis.h>
 #include <rapidjson/document.h>
@@ -113,9 +115,7 @@ int WriteKeywordsToRedis(const rapidjson::Document &json_doc) {
       return 1;
   }   
   
-  std::vector<std::string> words;
   std::string keywords, time_str;
-  
   if(json_doc.HasMember("keywords")) {
       keywords = json_doc["keywords"].GetString();
   }
@@ -123,15 +123,20 @@ int WriteKeywordsToRedis(const rapidjson::Document &json_doc) {
       time_str = json_doc["time"].GetString();
   }
   //fprintf(stdout, "%.*s\n", int(keywords.size()), keywords.c_str());
-  std::string temp_word;
-  for(char c:keywords) {
-      if(c == ',') {
-          words.push_back(temp_word);
+  std::vector<std::string> words;
+  std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+  std::wstring temp_word;
+  std::wstring w_keywords = conv.from_bytes(keywords);
+  std::locale loc("en_US.UTF-8");
+  for(wchar_t wc:w_keywords) {
+      if(std::ispunct(wc, loc)) {
+          words.push_back(conv.to_bytes(temp_word));
           temp_word.clear();
       }
-      else temp_word += c;
+      else temp_word += wc;
   }
-  if(temp_word.size()) words.push_back(temp_word);
+  if(temp_word.size()) words.push_back(conv.to_bytes(temp_word));
+
   int res = 0;
   if(words.size() && time_str.size()) {
       res = r->zadd_words(time_str, words);
