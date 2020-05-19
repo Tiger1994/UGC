@@ -73,8 +73,8 @@ int SearchInES(const std::string &search_info, const std::string str_limit, \
   writer2.Int(total);
   std::string num_find = std::to_string(doc["hits"]["total"].GetInt());
   num_find = "Searched " + num_find + " record(s).";
-  fprintf(stdout, "%.*s\n", num_find.size(), num_find.c_str());
-  int ceil = offset + limit > total ? total : offset + limit;
+  fprintf(stdout, "%.*s\n", int(num_find.size()), num_find.c_str());
+  size_t ceil = offset + limit > total ? total : offset + limit;
   for (size_t i = offset; i < ceil; i++) {
     std::string str_index = std::to_string(i);
     writer2.Key(str_index.c_str());

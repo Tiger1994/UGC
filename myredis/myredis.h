@@ -43,12 +43,15 @@ public:
     return res;
   }
 
-  void zadd_words(std::string key, std::vector<std::string> words){
+  int zadd_words(std::string key, std::vector<std::string> words){
     for(std::string w:words){
-      std::string cmd = "ZINCRBY " + key + " 1 " + w;
+      std::string cmd = "ZINCRBY " + key + " 1 " + "\"" + w + "\"";
       this->reply_ = (redisReply*)redisCommand(this->connetc_,cmd.c_str());
-      freeReplyObject(this->reply_);
+      if(this->reply_->type == REDIS_REPLY_ERROR) return 1;
+      // fprintf(stdout, "%.*s\n", int(cmd.size()), cmd.c_str());
+			freeReplyObject(this->reply_);
     }
+    return 0;
   }
 
   int zrevrangebyscore(std::string key, std::vector<std::string> &items){
@@ -58,7 +61,7 @@ public:
     if(this->reply_ && this->reply_->type == REDIS_REPLY_ARRAY){
       std::string str = std::to_string(this->reply_->elements);
       str = "Get " + str + " Hotwords";
-      fprintf(stdout, "%.*s\n", str.size(), str.c_str());
+      fprintf(stdout, "%.*s\n", int(str.size()), str.c_str());
       
       for(size_t i = 0; i < this->reply_->elements; i++){
         redisReply *ele = this->reply_->element[i];
@@ -94,21 +97,20 @@ void GetHotwords(const std::string key, std::string &body){
   std::vector<std::string> items;
   r->zrevrangebyscore(key,items);
 
-  for(int i = 0; i < items.size(); i++){
+  for(int i = 0; i < int(items.size()); i++){
     body += items[i];
-    if(i<int(items.size())-1) body += ",";
+    if(i < int(items.size())-1) body += ",";
   }
   //fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
 }
 
-void WriteKeywordsToRedis(const rapidjson::Document &json_doc) {
-  std::string show_status = "Write to Redis.";
-  fprintf(stdout, "%.*s\n", (int)show_status.size(), show_status.c_str());
-  
+int WriteKeywordsToRedis(const rapidjson::Document &json_doc) {
+  // std::string show_status = "Write to Redis.";
+  // fprintf(stdout, "%.*s\n", (int)show_status.size(), show_status.c_str());
   Redis *r = new Redis();
   if(!r->connect("127.0.0.1", 6379)){
       fprintf(stdout, "%.*s\n", 20, "Connect Redis failed");
-      return;
+      return 1;
   }   
   
   std::vector<std::string> words;
@@ -120,6 +122,7 @@ void WriteKeywordsToRedis(const rapidjson::Document &json_doc) {
   if(json_doc.HasMember("time")) {
       time_str = json_doc["time"].GetString();
   }
+  //fprintf(stdout, "%.*s\n", int(keywords.size()), keywords.c_str());
   std::string temp_word;
   for(char c:keywords) {
       if(c == ',') {
@@ -129,11 +132,13 @@ void WriteKeywordsToRedis(const rapidjson::Document &json_doc) {
       else temp_word += c;
   }
   if(temp_word.size()) words.push_back(temp_word);
+  int res = 0;
   if(words.size() && time_str.size()) {
-      r->zadd_words(time_str, words);
+      res = r->zadd_words(time_str, words);
       delete r;
       r=NULL;
   }
+  return res;
 }
 
 #endif

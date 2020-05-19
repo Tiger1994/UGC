@@ -42,38 +42,38 @@ void PostRecordHandler(const shared_ptr<restbed::Session> session){
     memcpy(temp, body.data(), body.size());
     temp[body.size()] = '\0';
     json_doc.Parse(temp);
-		bool valid_title = false;
-		bool valid_author = false;
-		bool valid_keywords = false;
-		bool valid_time = false;
-		bool valid_content = false;
+		vector<string> check_list{"title", "author", "keywords", "time", "content"};
+		bool valid_input = true;
+		for(string key : check_list) {
+			if(json_doc.HasMember(key.c_str())) {
+				string value = json_doc[key.c_str()].GetString();
+				if(value.empty()){
+					valid_input = false;
+					break;
+				}
+			}
+			else {
+				valid_input = false;
+				break;
+			}
+		}
 		
-		if(json_doc.HasMember("title")) {
-			string title = json_doc["title"].GetString();
-			if(!title.empty()) valid_title = true;
-		}	
- 		if(json_doc.HasMember("author")) {
-			string title = json_doc["author"].GetString();
-			if(!title.empty()) valid_author = true;
-		}	
- 		if(json_doc.HasMember("keywords")) {
-			string title = json_doc["keywords"].GetString();
-			if(!title.empty()) valid_keywords = true;
-		}	
- 		if(json_doc.HasMember("time")) {
-			string title = json_doc["time"].GetString();
-			if(!title.empty()) valid_time = true;
-		}	
- 		if(json_doc.HasMember("content")) {
-			string title = json_doc["content"].GetString();
-			if(!title.empty()) valid_content = true;
+		int write_redis_flag;
+		int write_mysql_flag;
+		if(valid_input) {
+			string show_status = "Write Record.";
+			fprintf(stdout, "%.*s\n", (int)show_status.size(), show_status.c_str());
+			write_redis_flag = WriteKeywordsToRedis(json_doc);
+			write_mysql_flag = WriteRecordToMysql(json_doc);
 		}
-		if(valid_title && valid_author && valid_keywords && valid_time && valid_content) {
-			WriteKeywordsToRedis(json_doc);
-			WriteRecordToMysql(json_doc);
-		}
-    session->close(restbed::OK, "Post complete!", {{"Content-Length", "14"}, \
-			{"Connection", "close"}});
+		
+		string write_res;
+		if(write_redis_flag == 0 && write_mysql_flag == 0) 
+			write_res = "Post success!";
+		else write_res = "Post fail!";
+		string content_len = to_string(write_res.size());
+    session->close(restbed::OK, write_res.c_str(), {{"Content-Length", \
+			content_len.c_str()}, {"Connection", "close"}});
   };
 
   session->fetch(content_size, handle_body);  
