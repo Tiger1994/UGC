@@ -28,8 +28,9 @@
                         "mapping": {
                             "type": "text",
                             "norms": false,
-                            "analyzer": "ik_max_word",#只需要添加这一行即可设置分词器为ik_max_word
-                            "fields": {
+                            "analyzer": "ik_max_word",
+                            "search_analyzer": "ik_smart",
+														"fields": {
                                 "keyword": {
                                     "type": "keyword"
                                 }

@@ -15,6 +15,8 @@
 #include <curl/easy.h>
 #include <curl/curlbuild.h>
 
+#include "../util/urlcode.h"
+
 size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream) {
   std::string data((const char*) ptr, (size_t) size * nmemb);
   *((std::stringstream*) stream) << data;
@@ -27,6 +29,7 @@ int SearchInES(const std::string &search_info, const std::string str_limit, \
   if(!str_limit.empty()) limit = std::stoi(str_limit);
   if(!str_offset.empty()) offset = std::stoi(str_offset);
 
+  std::string search_info_decode = UrlDecode(search_info);
   rapidjson::StringBuffer str_buf;
   rapidjson::Writer<rapidjson::StringBuffer> writer(str_buf);
   writer.StartObject();
@@ -36,7 +39,9 @@ int SearchInES(const std::string &search_info, const std::string str_limit, \
   writer.StartObject();
   writer.Key("content");
 
-  writer.String(search_info.c_str());
+  writer.String(search_info_decode.c_str());
+  writer.Key("analyzer");
+  writer.String("ik_max_word");
   writer.EndObject(); 
   writer.EndObject(); 
   writer.EndObject(); 
@@ -44,9 +49,9 @@ int SearchInES(const std::string &search_info, const std::string str_limit, \
   std::stringstream out;
   std::string query = str_buf.GetString();
 
-  //fprintf(stdout, "%.*s\n", int(query.size()), query.c_str());
+  fprintf(stdout, "%.*s\n", int(query.size()), query.c_str());
   void* curl = curl_easy_init();
-  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9200/resource/_search");
+  curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:9200/resource/_search?pretty");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, query.c_str());

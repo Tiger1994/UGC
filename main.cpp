@@ -79,27 +79,17 @@ void PostRecordHandler(const shared_ptr<restbed::Session> session){
   session->fetch(content_size, handle_body);  
 }
 
-void PostSearchHandler(const shared_ptr<restbed::Session> session){
+void GetSearchHandler(const shared_ptr<restbed::Session> session){
   const auto request = session->get_request();
-  size_t content_size = request->get_header("Content-Length", 0);
+  const string keywords = request->get_query_parameter("keywords");
+  const string limit = request->get_query_parameter("limit");
+  const string offset = request->get_query_parameter("offset");
   
-  auto handle_body = [request](const shared_ptr<restbed::Session> session, \
-			const restbed::Bytes &body){  
-    //fprintf(stdout, "%.*s\n", (int)body.size(),body.data());
-    const string limit = request->get_query_parameter("limit");
-    const string offset = request->get_query_parameter("offset");
-    //Convert unsighed char* to char*
-    char temp[body.size() + 1];
-    memcpy(temp, body.data(), body.size());
-    temp[body.size()] = '\0';
-    string search_info(temp);
-    string search_res;
-    SearchInES(search_info, limit, offset, search_res);
-    string res_len = to_string(int(search_res.size()));
-    session->close(restbed::OK, search_res.c_str(), {{"Content-Length", res_len}});
-  };
-
-  session->fetch(content_size, handle_body);  
+  string search_res;
+  if(!keywords.empty()){	
+    SearchInES(keywords, limit, offset, search_res);
+	}
+  session->close(restbed::OK, search_res, {{"Content-Length", ::to_string(search_res.size())}});
 }
 
 int main(void){
@@ -113,7 +103,7 @@ int main(void){
 
   auto resource_search = make_shared<restbed::Resource>();
   resource_search->set_path("/resource/_search");
-  resource_search->set_method_handler("POST", PostSearchHandler);
+  resource_search->set_method_handler("GET", GetSearchHandler);
 
   auto settings = make_shared<restbed::Settings>();
   settings->set_port(1984);
